@@ -45,3 +45,7 @@ edu-ia-service/.env
 
 # Node
 node_modules/
+__pycache__/
+*.pyc
+chroma_db/
+edu-ia-service/documentos/
