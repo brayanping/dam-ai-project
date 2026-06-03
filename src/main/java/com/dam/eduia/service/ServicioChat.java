@@ -42,16 +42,27 @@ public class ServicioChat {
 
     // Guarda un mensaje en una conversación
     public Mensaje guardarMensaje(Long conversacionId, String contenido, String rol) {
-        Conversacion conversacion = conversacionRepositorio.findById(conversacionId)
-                .orElseThrow(() -> new RuntimeException("Conversación no encontrada"));
+    Conversacion conversacion = conversacionRepositorio.findById(conversacionId)
+            .orElseThrow(() -> new RuntimeException("Conversación no encontrada"));
 
-        Mensaje mensaje = new Mensaje();
-        mensaje.setContenido(contenido);
-        mensaje.setRol(rol);
-        mensaje.setConversacion(conversacion);
-
-        return mensajeRepositorio.save(mensaje);
+    // Si es el primer mensaje del usuario, actualiza el título
+    if (rol.equals("usuario")) {
+        List<Mensaje> mensajesExistentes = mensajeRepositorio.findByConversacionId(conversacionId);
+        if (mensajesExistentes.isEmpty()) {
+            // Recorta el título a 50 caracteres máximo
+            String titulo = contenido.length() > 50 ? contenido.substring(0, 50) + "..." : contenido;
+            conversacion.setTitle(titulo);
+            conversacionRepositorio.save(conversacion);
+        }
     }
+
+    Mensaje mensaje = new Mensaje();
+    mensaje.setContenido(contenido);
+    mensaje.setRol(rol);
+    mensaje.setConversacion(conversacion);
+
+    return mensajeRepositorio.save(mensaje);
+}
 
     // Devuelve todos los mensajes de una conversación
     public List<Mensaje> obtenerMensajes(Long conversacionId) {

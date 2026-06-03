@@ -2,6 +2,7 @@ package com.dam.eduia.service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.http.MediaType;
 import java.util.Map;
 
@@ -16,7 +17,6 @@ public class ServicioIACliente {
                 .build();
     }
 
-    // Envía una pregunta al servicio de IA Python
     public String hacerPregunta(String pregunta) {
         try {
             Map respuesta = webClient.post()
@@ -28,12 +28,19 @@ public class ServicioIACliente {
                     .block();
 
             return respuesta != null ? (String) respuesta.get("respuesta") : "Sin respuesta";
+
+        } catch (WebClientRequestException e) {
+            // El servicio Python no está arrancado
+            System.out.println("❌ Servicio IA no disponible: " + e.getMessage());
+            return "El servicio de IA no está disponible en este momento. Por favor, inténtalo más tarde.";
+
         } catch (Exception e) {
-            return "Error al conectar con el servicio de IA: " + e.getMessage();
+            // Cualquier otro error
+            System.out.println("❌ Error en servicio IA: " + e.getMessage());
+            return "Error al procesar tu pregunta. Por favor, inténtalo de nuevo.";
         }
     }
 
-    // Envía un documento al servicio de IA para procesarlo
     public void procesarDocumento(String rutaArchivo, String tipo) {
         try {
             webClient.post()
@@ -43,8 +50,14 @@ public class ServicioIACliente {
                     .retrieve()
                     .bodyToMono(Map.class)
                     .block();
+
+        } catch (WebClientRequestException e) {
+            System.out.println("❌ Servicio IA no disponible para procesar documento: " + e.getMessage());
+            throw new RuntimeException("El servicio de IA no está disponible. El documento no pudo procesarse.");
+
         } catch (Exception e) {
-            System.out.println("Error al procesar documento: " + e.getMessage());
+            System.out.println("❌ Error procesando documento: " + e.getMessage());
+            throw new RuntimeException("Error al procesar el documento: " + e.getMessage());
         }
     }
 }

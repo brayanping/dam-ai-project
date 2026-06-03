@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import java.util.HashMap;
+import java.util.Map;
 
 import java.util.List;
 
@@ -19,6 +21,7 @@ import java.util.List;
 public class ControladorChat {
 	@Autowired
 	private ConversacionRepositorio conversacionRepositorio;
+   
 
     @Autowired
     private ServicioChat servicioChat;
@@ -82,4 +85,25 @@ public class ControladorChat {
         conversacionRepositorio.deleteById(id);
         return ResponseEntity.ok().build();
     }
+    @GetMapping(value = "/conversacion/{id}/exportar", produces = "application/json")
+public ResponseEntity<Map<String, Object>> exportarConversacion(
+        @PathVariable Long id, Authentication auth) {
+    
+    List<Mensaje> mensajes = servicioChat.obtenerMensajes(id);
+    Conversacion conversacion = conversacionRepositorio.findById(id)
+            .orElseThrow(() -> new RuntimeException("Conversación no encontrada"));
+
+    Map<String, Object> exportacion = new HashMap<>();
+    exportacion.put("titulo", conversacion.getTitle());
+    exportacion.put("fecha", conversacion.getCreatedAt());
+    exportacion.put("usuario", auth.getName());
+    exportacion.put("mensajes", mensajes.stream().map(m -> {
+        Map<String, String> msg = new HashMap<>();
+        msg.put("rol", m.getRol());
+        msg.put("contenido", m.getContenido());
+        return msg;
+    }).toList());
+
+    return ResponseEntity.ok(exportacion);
+}
 }
