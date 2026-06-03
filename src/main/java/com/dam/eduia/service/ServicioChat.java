@@ -57,4 +57,39 @@ public class ServicioChat {
     public List<Mensaje> obtenerMensajes(Long conversacionId) {
         return mensajeRepositorio.findByConversacionId(conversacionId);
     }
+
+    // Actualiza el título de una conversación basado en la primera pregunta
+    public void actualizarTituloDesdeFirstPregunta(Long conversacionId, String pregunta) {
+        Conversacion conversacion = conversacionRepositorio.findById(conversacionId)
+                .orElseThrow(() -> new RuntimeException("Conversación no encontrada"));
+
+        // Extrae las primeras palabras de la pregunta (máximo 8 palabras)
+        String titulo = extraerTitulo(pregunta);
+        conversacion.setTitle(titulo);
+        conversacionRepositorio.save(conversacion);
+    }
+
+    // Extrae un título conciso de la pregunta (primeras 3-8 palabras, sin caracteres especiales)
+    private String extraerTitulo(String pregunta) {
+        // Limpia la pregunta: quita caracteres especiales al inicio/final
+        String cleaned = pregunta.trim().replaceAll("[?¿,;:!¡.]", "");
+        
+        // Divide por espacios y toma máximo 8 palabras
+        String[] palabras = cleaned.split("\\s+");
+        StringBuilder titulo = new StringBuilder();
+        
+        for (int i = 0; i < Math.min(8, palabras.length); i++) {
+            if (i > 0) titulo.append(" ");
+            titulo.append(palabras[i]);
+        }
+        
+        String result = titulo.toString();
+        
+        // Si está vacío, usa un título por defecto
+        if (result.isEmpty()) {
+            result = "Nueva conversación";
+        }
+        
+        return result;
+    }
 }

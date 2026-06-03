@@ -51,13 +51,21 @@ public class ControladorChat {
 
         // Si no viene conversacionId crea una nueva conversación
         Long conversacionId = dto.getConversacionId();
+        boolean esNuevaConversacion = false;
+        
         if (conversacionId == null) {
             Conversacion nueva = servicioChat.crearConversacion(auth.getName());
             conversacionId = nueva.getId();
+            esNuevaConversacion = true;
         }
 
         // Guarda la pregunta del usuario
         servicioChat.guardarMensaje(conversacionId, dto.getPregunta(), "usuario");
+        
+        // Si es una nueva conversación, actualiza el título basado en la primera pregunta
+        if (esNuevaConversacion) {
+            servicioChat.actualizarTituloDesdeFirstPregunta(conversacionId, dto.getPregunta());
+        }
 
         // Envía la pregunta al servicio de IA
         String respuestaIA = servicioIACliente.hacerPregunta(dto.getPregunta());
